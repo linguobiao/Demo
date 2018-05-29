@@ -64,7 +64,7 @@ public class ShowLogUtil {
         buildLine(stringBuilder);
     }
 
-    public static void buildSetLog(SyncSetBean bean, StringBuilder stringBuilder){
+    public static void buildSetLog(SyncSetBean bean, CarMeasureOrderBean carMeasureOrderBean, StringBuilder stringBuilder){
         buildLine(stringBuilder);
         build(stringBuilder, "-->>收到设置数据...");
         if (bean != null) {
@@ -72,6 +72,18 @@ public class ShowLogUtil {
             build(stringBuilder, "unit:" + bean.getUnit());
             build(stringBuilder, "alarm:" + bean.isAlarm());
             build(stringBuilder, "type:" + (bean.getType() == 1 ? "车辆模式打开" : "车辆模式关闭"));
+            build(stringBuilder, "车辆编号:" + bean.getCarNumber());
+            if (carMeasureOrderBean == null) {
+                build(stringBuilder, "当前测量位置: 无法获取当前测量位置，请先获取测量顺序");
+            } else {
+                ArrayList<SdkPart> sdkParts = carMeasureOrderBean.getSdkParts();
+                if (sdkParts.size() >= bean.getCurOrderIndex()) {
+                    build(stringBuilder, "当前测量位置: " + sdkParts.get(bean.getCurOrderIndex()).getName());
+                } else {
+                    build(stringBuilder, "当前测量位置: 当前序号大于测量顺序范围内");
+                }
+            }
+
         }
         buildLine(stringBuilder);
     }
@@ -84,6 +96,10 @@ public class ShowLogUtil {
             build(stringBuilder, "SN:" + bean.getSN());
             build(stringBuilder, "HV:" + bean.getHV());
             build(stringBuilder, "SV:" + bean.getSV());
+            build(stringBuilder, "CP:" + bean.getCP());
+            build(stringBuilder, "CS:" + bean.getCS());
+            build(stringBuilder, "支持涂层模式:" + bean.hasCoatingMode());
+            build(stringBuilder, "支持车辆模式:" + bean.hasCarMode());
         }
         buildLine(stringBuilder);
     }
@@ -97,6 +113,7 @@ public class ShowLogUtil {
                 unit = setBean.getUnit();
             }
             build(stringBuilder, "车辆编号:" + bean.getCarId());
+            build(stringBuilder, "车辆名称:" + bean.getCarName());
             build(stringBuilder, "检测部位:" + ParserUtils.getParkByCode(bean.getPartCode()).getName());
             build(stringBuilder, "部位总次数:" + bean.getPartCount());
             build(stringBuilder, "部位当前序号:" + bean.getPartCurrent());

@@ -18,15 +18,18 @@ import com.guoou.sdk.bean.InfoDataBean;
 import com.guoou.sdk.bean.LiveDataBean;
 import com.guoou.sdk.bean.SdkPart;
 import com.guoou.sdk.bean.SyncDataBean;
+import com.guoou.sdk.bean.SyncDataSetBean;
 import com.guoou.sdk.bean.SyncSetBean;
 import com.guoou.sdk.global.SdkManager;
 import com.inuker.bluetooth.library.Constants;
 import com.inuker.bluetooth.library.connect.listener.BleConnectStatusListener;
+import com.inuker.bluetooth.library.search.SearchResult;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -48,15 +51,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         EventBus.getDefault().register(this);//要在onCreate执行这句代码，不然会收不到设备返回的数据。还要在onDestroy()里面执行注销：EventBus.getDefault().unregister(this);
         tv_log = (TextView) findViewById(R.id.tv_log);
-        findViewById(R.id.bt_connect).setOnClickListener(this);
-        findViewById(R.id.bt_sync).setOnClickListener(this);
-        findViewById(R.id.bt_sync_info).setOnClickListener(this);
-        findViewById(R.id.bt_car_clean).setOnClickListener(this);
-        findViewById(R.id.bt_car_sync_data).setOnClickListener(this);
-        findViewById(R.id.bt_car_get_measure_order).setOnClickListener(this);
-        findViewById(R.id.bt_car_set_measure_order).setOnClickListener(this);
-        findViewById(R.id.bt_car_change_part).setOnClickListener(this);
         scrollView = (ScrollView)findViewById(R.id.scrollView);
+        showLog("-->>SDK版本号：" + SdkManager.getInstance().getSdkVersion());//SDK版本号
     }
 
     @Override
@@ -77,12 +73,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         switch (v.getId()) {
-            case R.id.bt_sync:                  //点击 普通模式-同步数据
-                showLog("-->>正在同步数据...");
-                SdkManager.getInstance().sync(mac, null);
+            case R.id.bt_disconnect:            //点击 断开设备
+                SdkManager.getInstance().getClient().disconnect(mac);
+                break;
+            case R.id.bt_device_info:           //点击 蓝牙设备信息
+                showLog("-->>可连接的设备列表：");
+                List<SearchResult> availableDevices = SdkManager.getInstance().getAvailableDevices();
+                if (availableDevices != null) {
+                    for (SearchResult device : availableDevices) {
+                        showLog(device.getName() + "   " + device.getAddress());
+                    }
+                }
+                String bluetoothName = SdkManager.getInstance().getBluetoothName(mac);
+                showLog("-->>当前连接设备的名称：" + bluetoothName);
+                break;
+            case R.id.bt_sync:                  //点击 普通模式-同步整组数据
+                showLog("-->>普通模式，正在同步整组数据...");
+                SdkManager.getInstance().sync(mac);
                 break;
             case R.id.bt_sync_info:             //点击 普通模式-获取设备信息
-                showLog("-->>正在同步设备信息...");
+                showLog("-->>普通模式，正在同步设备信息...");
                 SdkManager.getInstance().syncInfo(mac);
                 break;
             case R.id.bt_car_sync_data:         //点击 车辆模式-同步整车数据
@@ -127,6 +137,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 showLog("-->>车辆模式，清空整车数据...");
                 SdkManager.getInstance().syncCarClean(mac);
                 break;
+            case R.id.bt_sync_2:                    //点击 普通模式-同步整组数据（阻塞式访问）
+                showLog("-->>普通模式（阻塞式访问），正在同步整组数据...");
+                Thread thread = new Thread() {
+                    @Override public void run() {
+                        //开始阻塞式访问
+                        SyncDataSetBean syncDataSetBean = SdkManager.getInstance().getWholeGroupData(mac);
+                        //设置组
+                        syncSetBean = syncDataSetBean.getSyncSetBean();
+                        ShowLogUtil.buildSetLog(syncSetBean, carMeasureOrderBean, logBuilder);
+                        //数据组
+                        syncDataBean = syncDataSetBean.getSyncDataBean();
+                        ShowLogUtil.buildSyncDataLog(syncDataBean, syncSetBean, logBuilder);
+                        showDataLog();
+                        showLog("-->>普通模式，阻塞同步整组数据结束...");
+                    }
+                };
+                thread.start();
+                break;
+            case R.id.bt_car_sync_data_2:           //点击 车辆模式-同步整车数据（阻塞式访问）
+                showLog("-->>车辆模式（阻塞式访问），正在同步整车数据...");
+                Thread threadCar = new Thread() {
+                    @Override public void run() {
+                        //开始阻塞式访问
+                        carSyncDataBean = SdkManager.getInstance().getWholeCarData(mac);
+                        ShowLogUtil.buildCarSyncDataLog(carSyncDataBean, syncSetBean, logBuilder);
+                        showLog("-->>车辆模式，阻塞同步整车数据结束...");
+                        showDataLog();
+                    }
+                };
+                threadCar.start();
+                break;
+            case R.id.bt_car_get_measure_order_2:       //点击 车辆模式-获取测量顺序（阻塞式访问）
+                showLog("-->>车辆模式（阻塞式访问），正在获取测量顺序...");
+                Thread threadOrder = new Thread() {
+                    @Override public void run() {
+                        //开始阻塞式访问
+                        carMeasureOrderBean = SdkManager.getInstance().getCarSpotOrder(mac);
+                        ShowLogUtil.buildCarMeasureOrderLog(carMeasureOrderBean, logBuilder);
+                        showLog("-->>车辆模式，阻塞获取测量顺序结束...");
+                        showDataLog();
+                    }
+                };
+                threadOrder.start();
+                break;
             default:break;
         }
     }
@@ -137,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void connect() {
         logBuilder.setLength(0);//清空log
         tv_log.setText(null);//清空log
+        showLog("-->>SDK版本号：" + SdkManager.getInstance().getSdkVersion());//SDK版本号
         showLog("-->>正在连接[" + mac + "]...");
         SdkManager.getInstance().connectDevice(mac, new BleListener() {
             @Override
@@ -174,6 +229,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Subscribe
     public void onEventMainThread(Event event) {
+        if (event.getEventType() == Event.EVENT_SYNC_TIME_OUT) {
+            showLog("-->>同步超时...");
+            return;
+        }
         if (event.getLiveDataBean() != null) {          //收到实时数据
             liveDataBean = event.getLiveDataBean();
             ShowLogUtil.buildLiveLog(liveDataBean, syncSetBean, logBuilder);
@@ -184,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tv_log.setText(logBuilder.toString());
         } else if (event.getSyncSetBean() != null) {    //收到设置数据
             syncSetBean = event.getSyncSetBean();
-            ShowLogUtil.buildSetLog(syncSetBean, logBuilder);
+            ShowLogUtil.buildSetLog(syncSetBean, carMeasureOrderBean, logBuilder);
             tv_log.setText(logBuilder.toString());
         } else if (event.getInfoDataBean() != null) {   //收到设备信息
             infoDataBean = event.getInfoDataBean();
@@ -208,10 +267,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private StringBuilder logBuilder = new StringBuilder();
 
-    private void showLog(String log) {
-        logBuilder.append("\n" + log);
-        tv_log.setText(logBuilder.toString());
-        scrollDown();
+    private void showDataLog() {
+        runOnUiThread(new Runnable() {
+            @Override public void run() {
+                tv_log.setText(logBuilder.toString());
+            }
+        });
+    }
+
+    private void showLog(final String log) {
+        runOnUiThread(new Runnable() {
+            @Override public void run() {
+                logBuilder.append("\n" + log);
+                tv_log.setText(logBuilder.toString());
+                scrollDown();
+            }
+        });
     }
 
     private void scrollDown() {

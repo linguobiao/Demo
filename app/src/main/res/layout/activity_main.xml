@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp"
     android:orientation="vertical"
     tools:context="com.guoou.sdk.demo.MainActivity">
 
@@ -16,6 +15,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:padding="10dp"
             android:orientation="vertical">
 
             <TextView
@@ -35,6 +35,29 @@
         android:layout_alignParentBottom="true"
         android:orientation="vertical">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3">
+            <Button
+                android:id="@+id/bt_connect"
+                style="@style/base_button"
+                android:text="连接设备" />
+
+            <Button
+                android:id="@+id/bt_disconnect"
+                style="@style/base_button"
+                android:text="断开设备" />
+
+            <Button
+                android:id="@+id/bt_device_info"
+                style="@style/base_button"
+                android:text="蓝牙设备信息" />
+
+        </LinearLayout>
+
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -47,14 +70,14 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/bt_connect"
-                style="@style/base_button"
-                android:text="连接设备" />
-
-            <Button
                 android:id="@+id/bt_sync"
                 style="@style/base_button"
-                android:text="同步数据" />
+                android:text="同步整组数据" />
+
+            <Button
+                android:id="@+id/bt_sync_2"
+                style="@style/base_button"
+                android:text="同步整组数据(阻塞）" />
 
             <Button
                 android:id="@+id/bt_sync_info"
@@ -66,7 +89,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:textSize="12dp"
             android:text="车辆模式："/>
 
@@ -81,14 +103,14 @@
                 android:text="同步整车数据" />
 
             <Button
-                android:id="@+id/bt_car_change_part"
+                android:id="@+id/bt_car_sync_data_2"
                 style="@style/base_button"
-                android:text="切换测量位置" />
+                android:text="同步整车数据(阻塞)" />
 
             <Button
-                android:id="@+id/bt_car_clean"
+                android:id="@+id/bt_car_get_measure_order"
                 style="@style/base_button"
-                android:text="清空整车数据" />
+                android:text="获取测量顺序" />
 
         </LinearLayout>
 
@@ -99,15 +121,31 @@
             android:weightSum="3">
 
             <Button
-                android:id="@+id/bt_car_get_measure_order"
+                android:id="@+id/bt_car_get_measure_order_2"
                 style="@style/base_button"
-                android:text="获取测量顺序" />
+                android:text="获取测量顺序(阻塞)" />
 
             <Button
                 android:id="@+id/bt_car_set_measure_order"
                 style="@style/base_button"
                 android:text="指定测量顺序" />
 
+            <Button
+                android:id="@+id/bt_car_change_part"
+                style="@style/base_button"
+                android:text="切换测量位置" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3">
+            <Button
+                android:id="@+id/bt_car_clean"
+                style="@style/base_button"
+                android:text="清空整车数据" />
         </LinearLayout>
 
     </LinearLayout>

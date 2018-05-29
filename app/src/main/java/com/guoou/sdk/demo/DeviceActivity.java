@@ -90,27 +90,12 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
 
     public void onSearchResult(SearchResult device) {
         mSwipeRefreshLayout.setRefreshing(false);
-        String mac = ByteUtils.getDevice(device).getMac();
-        if (!mDevices.contains(device) && !mMacs.contains(mac)) {
-            mDevices.add(device);
-            mMacs.add(mac);
-            Collections.sort(mDevices, new Comparator<SearchResult>() {
-                @Override
-                public int compare(SearchResult device1, SearchResult device2) {
-                    return (int) (device2.rssi - device1.rssi);
-                }
-            });
-            pullToRefreshAdapter.notifyDataSetChanged();
-        } else {
-            for (SearchResult deviceSave : mDevices) {
-                if (deviceSave.getAddress().equals(device.getAddress())) {
-                    deviceSave.rssi = device.rssi;
-                    break;
-                }
-            }
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastTime >= 500) {
-                lastTime = currentTime;
+        if ("HMSoft".equals(device.getName()) || "Guoou".equals(device.getName()) || "Coating".equals(device.getName())) {
+            String mac = ByteUtils.getDevice(device).getMac();
+            if (!mDevices.contains(device) && !mMacs.contains(mac)) {
+                mDevices.add(device);
+                mMacs.add(mac);
+                SdkManager.getInstance().setAvailableDevices(mDevices);
                 Collections.sort(mDevices, new Comparator<SearchResult>() {
                     @Override
                     public int compare(SearchResult device1, SearchResult device2) {
@@ -118,6 +103,24 @@ public class DeviceActivity extends AppCompatActivity implements SwipeRefreshLay
                     }
                 });
                 pullToRefreshAdapter.notifyDataSetChanged();
+            } else {
+                for (SearchResult deviceSave : mDevices) {
+                    if (deviceSave.getAddress().equals(device.getAddress())) {
+                        deviceSave.rssi = device.rssi;
+                        break;
+                    }
+                }
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastTime >= 500) {
+                    lastTime = currentTime;
+                    Collections.sort(mDevices, new Comparator<SearchResult>() {
+                        @Override
+                        public int compare(SearchResult device1, SearchResult device2) {
+                            return (int) (device2.rssi - device1.rssi);
+                        }
+                    });
+                    pullToRefreshAdapter.notifyDataSetChanged();
+                }
             }
         }
     }
